@@ -1426,9 +1426,20 @@
             if (isMobile) {
                 // En móviles, usar html2pdf para generar PDF
                 const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = htmlPDF;
                 tempDiv.style.position = 'fixed';
                 tempDiv.style.left = '-9999px';
+                tempDiv.style.top = '0';
+                
+                // Crear el contenido del PDF
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(htmlPDF, 'text/html');
+                const body = doc.body;
+                
+                // Copiar todo el contenido del body parseado al div temporal
+                while (body.firstChild) {
+                    tempDiv.appendChild(body.firstChild);
+                }
+                
                 document.body.appendChild(tempDiv);
                 
                 const opt = {
@@ -1441,6 +1452,10 @@
                 
                 html2pdf().set(opt).from(tempDiv).save().then(() => {
                     document.body.removeChild(tempDiv);
+                }).catch((err) => {
+                    console.error('Error al generar PDF:', err);
+                    document.body.removeChild(tempDiv);
+                    alert('Error al generar el PDF. Intente nuevamente.');
                 });
             } else {
                 // En desktop, usar iframe para imprimir
