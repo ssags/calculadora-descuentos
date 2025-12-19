@@ -1476,83 +1476,72 @@
 
             if (isMobile) {
                 // En móviles, usar html2pdf para generar PDF
+                mostrarToast('Generando PDF...', 'info');
+                
                 const tempDiv = document.createElement('div');
-                // Fuera del viewport sin transform (compatible con html2canvas mobile)
                 tempDiv.style.cssText = `
-                    position: absolute;
+                    position: fixed;
                     top: 0;
-                    left: -9999px;
-                    width: 794px;
-                    min-height: 1123px;
+                    left: 0;
+                    width: 210mm;
                     background: white;
-                    padding: 32px;
+                    padding: 20px;
                     font-family: Arial, sans-serif;
+                    z-index: -1;
+                    opacity: 0;
+                    pointer-events: none;
                 `;
                 
-                // Crear el contenido HTML directamente como string y asignarlo
+                // Crear el contenido HTML con estilos más simples
                 tempDiv.innerHTML = `
-                    <style>
-                        * { margin: 0; padding: 0; box-sizing: border-box; }
-                        .pdf-header { text-align: center; margin-bottom: 30px; padding-bottom: 15px; border-bottom: 3px solid #667eea; }
-                        .pdf-header h1 { font-size: 24px; color: #1a1a1a; margin-bottom: 8px; }
-                        .pdf-header p { color: #64748b; font-size: 12px; }
-                        .pdf-stats { display: block; margin-bottom: 25px; }
-                        .pdf-stat-box { display: block; margin-bottom: 12px; padding: 15px; background: #f8fafc; border-radius: 8px; border-left: 4px solid #667eea; }
-                        .pdf-stat-label { font-size: 10px; color: #64748b; text-transform: uppercase; margin-bottom: 6px; font-weight: 600; }
-                        .pdf-stat-value { font-size: 18px; font-weight: 700; color: #1a1a1a; }
-                        .pdf-table { width: 100%; border-collapse: collapse; margin-bottom: 25px; border: 1px solid #e2e8f0; }
-                        .pdf-table thead { background: #f8fafc; }
-                        .pdf-table th { padding: 10px; text-align: left; font-size: 11px; font-weight: 600; color: #475569; }
-                        .pdf-table td { padding: 10px; border-bottom: 1px solid #e2e8f0; font-size: 12px; }
-                        .pdf-totales { background: #667eea; color: white; padding: 20px; border-radius: 10px; margin-top: 15px; }
-                        .pdf-total-row { display: block; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.2); }
-                        .pdf-total-row span:first-child { display: inline-block; width: 60%; }
-                        .pdf-total-row span:last-child { display: inline-block; width: 40%; text-align: right; }
-                        .pdf-total-row:last-child { border-bottom: none; border-top: 2px solid rgba(255,255,255,0.3); padding-top: 12px; margin-top: 10px; font-size: 16px; font-weight: 700; }
-                    </style>
-                    <div class="pdf-header">
-                        <h1>Resumen de Descuentos</h1>
-                        <p>${fecha}</p>
-                    </div>
-                    <div class="pdf-stats">
-                        <div class="pdf-stat-box">
-                            <div class="pdf-stat-label">Monto Inicial</div>
-                            <div class="pdf-stat-value">${formatearMoneda(montoInicial)}</div>
+                    <div style="padding: 20px;">
+                        <div style="text-align: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 3px solid #667eea;">
+                            <h1 style="font-size: 24px; color: #1a1a1a; margin-bottom: 8px;">Resumen de Descuentos</h1>
+                            <p style="color: #64748b; font-size: 12px;">${fecha}</p>
                         </div>
-                        <div class="pdf-stat-box">
-                            <div class="pdf-stat-label">Total Descontado</div>
-                            <div class="pdf-stat-value" style="color: #dc2626;">${formatearMoneda(totalDescontado)}</div>
+                        
+                        <div style="margin-bottom: 20px;">
+                            <div style="margin-bottom: 12px; padding: 15px; background: #f8fafc; border-radius: 8px; border-left: 4px solid #667eea;">
+                                <div style="font-size: 10px; color: #64748b; text-transform: uppercase; margin-bottom: 6px; font-weight: 600;">Monto Inicial</div>
+                                <div style="font-size: 18px; font-weight: 700; color: #1a1a1a;">${formatearMoneda(montoInicial)}</div>
+                            </div>
+                            <div style="margin-bottom: 12px; padding: 15px; background: #f8fafc; border-radius: 8px; border-left: 4px solid #667eea;">
+                                <div style="font-size: 10px; color: #64748b; text-transform: uppercase; margin-bottom: 6px; font-weight: 600;">Total Descontado</div>
+                                <div style="font-size: 18px; font-weight: 700; color: #dc2626;">${formatearMoneda(totalDescontado)}</div>
+                            </div>
+                            <div style="margin-bottom: 12px; padding: 15px; background: #f8fafc; border-radius: 8px; border-left: 4px solid #667eea;">
+                                <div style="font-size: 10px; color: #64748b; text-transform: uppercase; margin-bottom: 6px; font-weight: 600;">% Descontado</div>
+                                <div style="font-size: 18px; font-weight: 700; color: #667eea;">${porcentajeTotal}%</div>
+                            </div>
                         </div>
-                        <div class="pdf-stat-box">
-                            <div class="pdf-stat-label">% Descontado</div>
-                            <div class="pdf-stat-value" style="color: #667eea;">${porcentajeTotal}%</div>
-                        </div>
-                    </div>
-                    <h2 style="margin-bottom: 12px; font-size: 16px; color: #1a1a1a;">Detalle de Descuentos</h2>
-                    <table class="pdf-table">
-                        <thead>
-                            <tr>
-                                <th>Concepto</th>
-                                <th style="text-align: center;">Tipo/Valor</th>
-                                <th style="text-align: right;">Monto</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${htmlDescuentos}
-                        </tbody>
-                    </table>
-                    <div class="pdf-totales">
-                        <div class="pdf-total-row">
-                            <span>Monto Inicial:</span>
-                            <span>${formatearMoneda(montoInicial)}</span>
-                        </div>
-                        <div class="pdf-total-row">
-                            <span>Total Descontado:</span>
-                            <span>- ${formatearMoneda(totalDescontado)}</span>
-                        </div>
-                        <div class="pdf-total-row">
-                            <span>Monto Final:</span>
-                            <span>${formatearMoneda(montoFinal)}</span>
+                        
+                        <h2 style="margin-bottom: 12px; font-size: 16px; color: #1a1a1a;">Detalle de Descuentos</h2>
+                        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; border: 1px solid #e2e8f0;">
+                            <thead style="background: #f8fafc;">
+                                <tr>
+                                    <th style="padding: 10px; text-align: left; font-size: 11px; font-weight: 600; color: #475569;">Concepto</th>
+                                    <th style="padding: 10px; text-align: center; font-size: 11px; font-weight: 600; color: #475569;">Tipo/Valor</th>
+                                    <th style="padding: 10px; text-align: right; font-size: 11px; font-weight: 600; color: #475569;">Monto</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${htmlDescuentos}
+                            </tbody>
+                        </table>
+                        
+                        <div style="background: #667eea; color: white; padding: 20px; border-radius: 10px; margin-top: 15px;">
+                            <div style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.2);">
+                                <span style="display: inline-block; width: 50%;">Monto Inicial:</span>
+                                <span style="display: inline-block; width: 50%; text-align: right;">${formatearMoneda(montoInicial)}</span>
+                            </div>
+                            <div style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.2);">
+                                <span style="display: inline-block; width: 50%;">Total Descontado:</span>
+                                <span style="display: inline-block; width: 50%; text-align: right;">- ${formatearMoneda(totalDescontado)}</span>
+                            </div>
+                            <div style="border-top: 2px solid rgba(255,255,255,0.3); padding-top: 12px; margin-top: 10px; font-size: 16px; font-weight: 700;">
+                                <span style="display: inline-block; width: 50%;">Monto Final:</span>
+                                <span style="display: inline-block; width: 50%; text-align: right;">${formatearMoneda(montoFinal)}</span>
+                            </div>
                         </div>
                     </div>
                 `;
@@ -1560,23 +1549,20 @@
                 document.body.appendChild(tempDiv);
                 
                 const opt = {
-                    margin: 10,
+                    margin: [10, 10, 10, 10],
                     filename: 'resumen-descuentos.pdf',
-                    image: { type: 'jpeg', quality: 0.98 },
+                    image: { type: 'jpeg', quality: 0.95 },
                     html2canvas: {
                         scale: 2,
-                        backgroundColor: '#ffffff',
                         useCORS: true,
-                        windowWidth: tempDiv.scrollWidth,
-                        windowHeight: tempDiv.scrollHeight
+                        logging: false,
+                        backgroundColor: '#ffffff'
                     },
                     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
                 };
                 
-                // Delay realista para mobile + DOM dinámico
-                setTimeout(async () => {
-                    await document.fonts.ready;
-                    
+                // Esperar a que se renderice completamente
+                setTimeout(() => {
                     html2pdf()
                         .set(opt)
                         .from(tempDiv)
@@ -1585,6 +1571,7 @@
                             if (document.body.contains(tempDiv)) {
                                 document.body.removeChild(tempDiv);
                             }
+                            mostrarToast('✅ PDF descargado correctamente', 'success');
                         })
                         .catch((err) => {
                             console.error('Error al generar PDF:', err);
@@ -1593,7 +1580,7 @@
                             }
                             mostrarToast('Error al generar el PDF. Intente nuevamente.', 'error');
                         });
-                }, 700);
+                }, 500);
             } else {
                 // En desktop, usar iframe para imprimir
                 const iframe = document.createElement('iframe');
