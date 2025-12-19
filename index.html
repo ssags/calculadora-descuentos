@@ -1176,10 +1176,11 @@
                                        value="${desc.valor || ''}"
                                        onfocus="if(this.value == '0') this.value = ''"
                                        oninput="actualizarCampo(${desc.id}, 'valor')">
-                                <div class="warning-message" id="warning-${desc.id}">
-                                    ⚠️ El monto ingresado supera el saldo disponible. Solo se descontará hasta agotar el saldo.
-                                </div>
                             </div>
+                        </div>
+
+                        <div class="warning-message" id="warning-${desc.id}">
+                            ⚠️ El monto ingresado supera el saldo disponible. Solo se descontará hasta agotar el saldo.
                         </div>
 
                         <div class="monto-descontado">
