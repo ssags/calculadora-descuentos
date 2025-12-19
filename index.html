@@ -1426,16 +1426,22 @@
             if (isMobile) {
                 // En móviles, usar html2pdf para generar PDF
                 const tempDiv = document.createElement('div');
-                tempDiv.style.position = 'fixed';
-                tempDiv.style.left = '-9999px';
-                tempDiv.style.top = '0';
+                tempDiv.style.cssText = 'position: fixed; left: -9999px; top: 0; width: 800px; background: white;';
                 
-                // Crear el contenido del PDF
+                // Parsear el HTML y extraer los estilos del head
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(htmlPDF, 'text/html');
-                const body = doc.body;
                 
-                // Copiar todo el contenido del body parseado al div temporal
+                // Crear un style element con los estilos del documento parseado
+                const styleEl = doc.querySelector('style');
+                if (styleEl) {
+                    const newStyle = document.createElement('style');
+                    newStyle.textContent = styleEl.textContent;
+                    tempDiv.appendChild(newStyle);
+                }
+                
+                // Copiar el contenido del body
+                const body = doc.body;
                 while (body.firstChild) {
                     tempDiv.appendChild(body.firstChild);
                 }
@@ -1454,7 +1460,9 @@
                     document.body.removeChild(tempDiv);
                 }).catch((err) => {
                     console.error('Error al generar PDF:', err);
-                    document.body.removeChild(tempDiv);
+                    if (document.body.contains(tempDiv)) {
+                        document.body.removeChild(tempDiv);
+                    }
                     alert('Error al generar el PDF. Intente nuevamente.');
                 });
             } else {
