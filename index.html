@@ -1,0 +1,1496 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>Calculadora de Descuentos</title>
+    <style>
+        /* Estilos generales */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: clamp(12px, 3vw, 24px);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            overflow-x: hidden;
+        }
+
+        .container {
+            background: white;
+            border-radius: clamp(16px, 4vw, 24px);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+            padding: clamp(20px, 5vw, 32px);
+            max-width: 650px;
+            width: 100%;
+            margin: clamp(8px, 3vw, 20px) auto;
+            overflow: hidden;
+        }
+
+        h1 {
+            color: #1a1a1a;
+            text-align: center;
+            margin-bottom: clamp(6px, 2vw, 8px);
+            font-size: clamp(20px, 5vw, 28px);
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        /* Sección monto inicial */
+        .monto-inicial-section {
+            margin-bottom: 32px;
+        }
+
+        .input-group {
+            margin-bottom: 16px;
+        }
+
+        .monto-input-wrapper {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .monto-input-wrapper::before {
+            content: '$';
+            position: absolute;
+            left: clamp(12px, 3vw, 16px);
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: clamp(18px, 4vw, 20px);
+            font-weight: 600;
+            color: #94a3b8;
+            pointer-events: none;
+        }
+
+        #montoInicial {
+            padding-left: clamp(32px, 7vw, 36px);
+            font-size: clamp(18px, 4vw, 20px);
+            font-weight: 600;
+            height: clamp(50px, 10vw, 56px);
+            min-height: 50px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #374151;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        input[type="number"],
+        input[type="text"],
+        select {
+            width: 100%;
+            padding: clamp(10px, 2.5vw, 12px) clamp(14px, 3vw, 16px);
+            border: 2px solid #e2e8f0;
+            border-radius: clamp(10px, 2vw, 12px);
+            font-size: clamp(14px, 3vw, 15px);
+            transition: all 0.2s ease;
+            background: #fafbfc;
+            min-height: 44px;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        input[type="number"]:focus,
+        input[type="text"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+            transform: translateY(-1px);
+        }
+
+        /* Botones */
+        .btn {
+            padding: clamp(12px, 3vw, 14px) clamp(20px, 4vw, 24px);
+            border: none;
+            border-radius: clamp(10px, 2vw, 12px);
+            font-size: clamp(14px, 3vw, 15px);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: 100%;
+            min-height: 44px;
+            touch-action: manipulation;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: #10b981;
+            color: white;
+            margin-top: 20px;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: #059669;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-icon {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 50%;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            font-size: 14px;
+            font-weight: 700;
+            transition: all 0.2s;
+            color: #94a3b8;
+            touch-action: manipulation;
+            padding: 0;
+        }
+
+        .btn-icon:hover {
+            background: #fee2e2;
+            color: #dc2626;
+            border-color: #fecaca;
+            transform: scale(1.1);
+        }
+
+        .btn-icon.disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        /* Sección de descuentos */
+        .descuentos-section {
+            margin-bottom: 25px;
+        }
+
+        .descuento-item {
+            background: white;
+            padding: clamp(16px, 4vw, 20px);
+            border-radius: clamp(12px, 3vw, 16px);
+            margin-bottom: clamp(10px, 2vw, 12px);
+            border: 2px solid #e2e8f0;
+            position: relative;
+            transition: all 0.2s ease;
+            overflow: visible;
+        }
+
+        .descuento-item:hover {
+            border-color: #cbd5e1;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .descuento-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            position: relative;
+        }
+
+        .descuento-numero {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+            gap: clamp(12px, 3vw, 15px);
+            margin-bottom: clamp(12px, 3vw, 15px);
+        }
+
+        .col-full {
+            grid-column: 1 / -1;
+        }
+
+        /* Monto descontado visible */
+        .monto-descontado {
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            padding: 16px;
+            border-radius: 12px;
+            margin-top: 16px;
+            text-align: center;
+        }
+
+        .monto-descontado-label {
+            font-size: 11px;
+            color: #065f46;
+            margin-bottom: 4px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .monto-descontado-valor {
+            font-size: 24px;
+            font-weight: 700;
+            color: #047857;
+        }
+
+        /* Resumen final */
+        .resumen {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            color: white;
+            padding: 24px;
+            border-radius: 20px;
+            margin-top: 32px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        }
+
+        .resumen h2 {
+            margin-bottom: 20px;
+            font-size: 18px;
+            font-weight: 700;
+            color: white;
+        }
+
+        .resumen-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .resumen-item:last-child {
+            border-bottom: none;
+            padding-top: 16px;
+            margin-top: 16px;
+            border-top: 2px solid rgba(255, 255, 255, 0.2);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            border-radius: 12px;
+            margin-left: -4px;
+            margin-right: -4px;
+        }
+
+        .resumen-label {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.8);
+            font-weight: 400;
+        }
+
+        .resumen-valor {
+            font-size: 16px;
+            font-weight: 700;
+            color: white;
+        }
+
+        .resumen-final {
+            font-size: 28px !important;
+            color: white !important;
+        }
+
+        .descuentos-lista {
+            margin-top: 15px;
+        }
+
+        .descuento-resumen-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        /* Mensajes de error */
+        .error-message {
+            color: #dc3545;
+            font-size: 12px;
+            margin-top: 5px;
+            display: none;
+        }
+
+        /* Ocultar elemento */
+        .hidden {
+            display: none;
+        }
+
+        /* Descripción guía */
+        .descripcion {
+            color: #64748b;
+            font-size: clamp(12px, 3vw, 14px);
+            text-align: center;
+            margin-bottom: clamp(20px, 5vw, 32px);
+            line-height: 1.6;
+            font-weight: 400;
+        }
+
+        /* Alert de orden */
+        .alert-info {
+            background: #f0f9ff;
+            padding: 12px 16px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            color: #0369a1;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-left: 3px solid #0ea5e9;
+        }
+
+        /* Badge de tipo descuento */
+        .tipo-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 700;
+            margin-left: 8px;
+        }
+
+        .tipo-badge.porcentaje {
+            background: #fef3c7;
+            color: #ca8a04;
+        }
+
+        .tipo-badge.monto {
+            background: #dbeafe;
+            color: #0284c7;
+        }
+
+        /* Monto restante después del descuento */
+        .monto-restante {
+            background: #f8fafc;
+            padding: 12px;
+            border-radius: 10px;
+            margin-top: 12px;
+            font-size: 12px;
+            color: #64748b;
+            text-align: center;
+            border: 1px dashed #cbd5e1;
+        }
+
+        .monto-restante strong {
+            color: #1e293b;
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        /* Botones de acción del header */
+        .header-actions {
+            display: flex;
+            gap: clamp(6px, 1.5vw, 8px);
+            justify-content: flex-end;
+            margin-bottom: clamp(16px, 4vw, 24px);
+            flex-wrap: wrap;
+        }
+
+        .btn-small {
+            padding: 10px 18px;
+            font-size: 13px;
+            width: auto;
+            font-weight: 600;
+            min-height: 38px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            letter-spacing: 0.3px;
+        }
+
+        .btn-outline {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            color: #1e293b;
+            border: 2px solid #e2e8f0;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .btn-outline:hover {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-color: #667eea;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        /* Controles del descuento */
+        .descuento-controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        /* Checkbox activar/desactivar */
+        .descuento-toggle {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: clamp(40px, 8vw, 44px);
+            height: clamp(22px, 4vw, 24px);
+            min-width: 40px;
+            min-height: 22px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #cbd5e1;
+            transition: .3s;
+            border-radius: 24px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+        }
+
+        .toggle-switch input:checked + .toggle-slider {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .toggle-switch input:checked + .toggle-slider:before {
+            transform: translateX(20px);
+        }
+
+        .descuento-item.desactivado {
+            opacity: 0.6;
+            filter: grayscale(0.5);
+        }
+
+        /* Stats del resumen */
+        .resumen-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 16px;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        .stat-valor {
+            font-size: 20px;
+            font-weight: 700;
+            color: white;
+        }
+
+        /* Responsive mejorado */
+        @media (max-width: 768px) {
+            body {
+                padding: 8px;
+                align-items: stretch;
+            }
+
+            .container {
+                margin: 0;
+                min-height: calc(100vh - 16px);
+            }
+
+            .row {
+                grid-template-columns: 1fr;
+            }
+
+            .descuento-header {
+                flex-wrap: wrap;
+                gap: 12px;
+            }
+
+            .descuento-controls {
+                gap: 10px;
+            }
+
+            .descuento-controls {
+                flex-wrap: wrap;
+            }
+
+            .alert-info {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 4px;
+            }
+
+            .resumen-stats {
+                grid-template-columns: 1fr;
+            }
+
+            .stat-card {
+                padding: 12px;
+            }
+
+            .resumen {
+                border-radius: 16px;
+            }
+
+            .resumen-item:last-child {
+                padding: 14px;
+            }
+
+            /* Evitar zoom en inputs en iOS */
+            input[type="number"],
+            input[type="text"],
+            select {
+                font-size: 16px;
+            }
+        }
+
+        /* Landscape móviles */
+        @media (max-width: 768px) and (orientation: landscape) {
+            body {
+                padding: 8px;
+            }
+
+            .container {
+                margin: 0 auto;
+                min-height: auto;
+            }
+
+            h1 {
+                font-size: 18px;
+                margin-bottom: 4px;
+            }
+
+            .descripcion {
+                margin-bottom: 12px;
+            }
+
+            .monto-inicial-section {
+                margin-bottom: 16px;
+            }
+        }
+
+        /* Tablets */
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .container {
+                max-width: 90%;
+            }
+        }
+
+        /* Touch devices - mejores áreas de toque */
+        @media (hover: none) and (pointer: coarse) {
+            .btn {
+                min-height: 48px;
+            }
+
+            .btn-icon {
+                width: 40px;
+                height: 40px;
+                font-size: 18px;
+            }
+
+            .btn-small {
+                min-height: 44px;
+                padding: 10px 18px;
+            }
+
+            input,
+            select {
+                min-height: 48px;
+            }
+
+            .toggle-switch {
+                width: 48px;
+                height: 28px;
+            }
+
+            .toggle-switch {
+                width: 46px;
+                height: 26px;
+            }
+        }
+
+        /* Animaciones */
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .descuento-item {
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .resumen {
+            animation: fadeIn 0.4s ease-out;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>💰 Calculadora de Descuentos</h1>
+        <p class="descripcion">
+            Ingresá tu monto y calculá tus descuentos en segundos
+        </p>
+
+        <!-- Botones de acción -->
+        <div class="header-actions">
+            <button class="btn btn-small btn-outline" onclick="exportarResumen()" title="Copiar resumen al portapapeles">Copiar</button>
+            <button class="btn btn-small btn-outline" onclick="guardarEnLocal()" title="Descargar como PDF">PDF</button>
+            <button class="btn btn-small btn-outline" onclick="limpiarTodo()" title="Limpiar todo">Limpiar</button>
+        </div>
+
+        <!-- Sección de monto inicial -->
+        <div class="monto-inicial-section">
+            <div class="input-group">
+                <label for="montoInicial">¿Cuánto cobrás?</label>
+                <div class="monto-input-wrapper">
+                    <input type="number" id="montoInicial" placeholder="50000" min="0" step="0.01" oninput="onMontoInicialChange()">
+                </div>
+            </div>
+            <button class="btn btn-primary" onclick="agregarDescuento()">+ Agregar Descuento</button>
+        </div>
+
+        <!-- Alert de orden -->
+        <div class="alert-info hidden" id="alertOrden">
+            ℹ️ Los descuentos se aplican en el orden en que aparecen (de arriba hacia abajo)
+        </div>
+
+        <!-- Sección de descuentos -->
+        <div class="descuentos-section" id="descuentosContainer">
+            <!-- Los descuentos se agregarán aquí dinámicamente -->
+        </div>
+
+        <!-- Botón para agregar más descuentos -->
+        <button class="btn btn-secondary hidden" id="btnAgregarOtro" onclick="agregarDescuento()">
+            ➕ Agregar Otro Descuento
+        </button>
+
+        <!-- Resumen final -->
+        <div class="resumen hidden" id="resumenFinal">
+            <h2>📊 Resumen</h2>
+
+            <!-- Estadísticas rápidas -->
+            <div class="resumen-stats">
+                <div class="stat-card">
+                    <div class="stat-label">Total descontado</div>
+                    <div class="stat-valor" id="totalDescontado">$0.00</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Porcentaje total</div>
+                    <div class="stat-valor" id="porcentajeTotal">0%</div>
+                </div>
+            </div>
+
+            <div class="resumen-item">
+                <span class="resumen-label">Monto Inicial:</span>
+                <span class="resumen-valor" id="resumenMontoInicial">$0.00</span>
+            </div>
+            <div class="descuentos-lista" id="resumenDescuentos">
+                <!-- Lista de descuentos aplicados -->
+            </div>
+            <div class="resumen-item">
+                <span class="resumen-label">Monto Final:</span>
+                <span class="resumen-valor resumen-final" id="resumenMontoFinal">$0.00</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Variable global para contar descuentos
+        let contadorDescuentos = 0;
+
+        // Array para almacenar los descuentos
+        let descuentos = [];
+
+        /**
+         * Formatea un número como moneda en pesos
+         */
+        function formatearMoneda(valor) {
+            return new Intl.NumberFormat('es-AR', {
+                style: 'currency',
+                currency: 'ARS',
+                minimumFractionDigits: 2
+            }).format(valor);
+        }
+
+        /**
+         * Agrega un nuevo bloque de descuento
+         */
+        function agregarDescuento() {
+            const montoInicial = parseFloat(document.getElementById('montoInicial').value) || 0;
+            
+            if (montoInicial <= 0) {
+                alert('Por favor, ingrese un monto inicial válido');
+                return;
+            }
+
+            contadorDescuentos++;
+
+            // Agregar al estado (fuente única de verdad)
+            descuentos.push({
+                id: contadorDescuentos,
+                nombre: '',
+                tipo: 'porcentaje',
+                valor: 0,
+                montoDescontado: 0,
+                activo: true
+            });
+
+            // Renderizar el DOM desde el estado
+            renderizarDescuentos();
+            
+            // Mostrar botón de agregar otro
+            document.getElementById('btnAgregarOtro').classList.remove('hidden');
+
+            // Calcular todo
+            calcularTodo();
+        }
+
+        /**
+         * Cambia el tipo de descuento
+         */
+        function cambiarTipoDescuento(id) {
+            const descuento = descuentos.find(d => d.id === id);
+            if (!descuento) return;
+
+            const tipo = document.getElementById(`tipo-${id}`).value;
+            
+            // Actualizar estado (fuente única de verdad)
+            descuento.tipo = tipo;
+            descuento.valor = 0; // Reset valor al cambiar tipo
+
+            // Re-renderizar
+            renderizarDescuentos();
+            calcularTodo();
+        }
+
+        /**
+         * Actualiza el estado desde un input
+         */
+        function actualizarCampo(id, campo) {
+            const descuento = descuentos.find(d => d.id === id);
+            if (!descuento) return;
+
+            const input = document.getElementById(`${campo}-${id}`);
+            
+            if (campo === 'valor') {
+                let valor = parseFloat(input.value) || 0;
+                
+                // Validaciones
+                if (valor < 0) {
+                    valor = 0;
+                    input.value = 0;
+                }
+                
+                if (descuento.tipo === 'porcentaje' && valor > 100) {
+                    valor = 100;
+                    input.value = 100;
+                }
+                
+                descuento.valor = valor;
+            } else if (campo === 'nombre') {
+                descuento.nombre = input.value;
+            }
+
+            calcularTodo();
+        }
+
+        /**
+         * Calcula los montos de cada descuento (lógica pura)
+         */
+        function calcularDescuentos(montoInicial, descuentos) {
+            let montoRestante = montoInicial;
+            const resultado = [];
+
+            descuentos.forEach(descuento => {
+                if (!descuento.activo || montoRestante <= 0) {
+                    resultado.push({
+                        ...descuento,
+                        montoDescontado: 0,
+                        montoRestante
+                    });
+                    return;
+                }
+
+                let montoADescontar = 0;
+                if (descuento.tipo === 'porcentaje') {
+                    montoADescontar = montoRestante * (descuento.valor / 100);
+                } else {
+                    montoADescontar = Math.min(descuento.valor, montoRestante);
+                }
+
+                montoRestante -= montoADescontar;
+
+                resultado.push({
+                    ...descuento,
+                    montoDescontado: montoADescontar,
+                    montoRestante
+                });
+            });
+
+            return resultado;
+        }
+
+        /**
+         * Guarda el estado en localStorage
+         */
+        function guardarEstado() {
+            const montoInicial = parseFloat(document.getElementById('montoInicial').value) || 0;
+            
+            const estado = {
+                montoInicial,
+                descuentos,
+                contadorDescuentos
+            };
+            
+            localStorage.setItem('calculadoraDescuentos', JSON.stringify(estado));
+        }
+
+        /**
+         * Calcula todos los descuentos y actualiza la interfaz
+         */
+        function calcularTodo() {
+            const montoInicial = parseFloat(document.getElementById('montoInicial').value) || 0;
+
+            // Mostrar/ocultar alert de orden
+            const alertOrden = document.getElementById('alertOrden');
+            if (descuentos.length > 1) {
+                alertOrden.classList.remove('hidden');
+            } else {
+                alertOrden.classList.add('hidden');
+            }
+
+            // Calcular todos los montos (lógica pura desde el estado)
+            const descuentosCalculados = calcularDescuentos(montoInicial, descuentos);
+
+            // Actualizar el estado con los cálculos
+            descuentosCalculados.forEach((desc, index) => {
+                descuentos[index].montoDescontado = desc.montoDescontado;
+            });
+
+            // Renderizar el DOM desde el estado
+            descuentosCalculados.forEach((desc) => {
+                const montoDescontadoDiv = document.getElementById(`monto-descontado-${desc.id}`);
+                const montoRestanteDiv = document.getElementById(`monto-restante-${desc.id}`);
+                const itemDiv = document.getElementById(`descuento-${desc.id}`);
+
+                if (montoDescontadoDiv) {
+                    montoDescontadoDiv.textContent = formatearMoneda(desc.montoDescontado);
+                }
+
+                if (montoRestanteDiv) {
+                    montoRestanteDiv.textContent = formatearMoneda(Math.max(0, desc.montoRestante));
+                }
+
+                if (itemDiv) {
+                    if (desc.activo) {
+                        itemDiv.classList.remove('desactivado');
+                    } else {
+                        itemDiv.classList.add('desactivado');
+                    }
+                }
+            });
+
+            // Calcular monto final
+            const montoFinal = descuentosCalculados.length > 0 
+                ? descuentosCalculados[descuentosCalculados.length - 1].montoRestante 
+                : montoInicial;
+
+            // Actualizar el resumen final
+            actualizarResumen(montoInicial, montoFinal);
+
+            // Mostrar/ocultar resumen
+            const resumen = document.getElementById('resumenFinal');
+            if (montoInicial > 0 && descuentos.length > 0) {
+                resumen.classList.remove('hidden');
+            } else {
+                resumen.classList.add('hidden');
+            }
+
+            // Guardar estado automáticamente
+            guardarEstado();
+        }
+
+        /**
+         * Actualiza el resumen final
+         */
+        function actualizarResumen(montoInicial, montoFinal) {
+            document.getElementById('resumenMontoInicial').textContent = formatearMoneda(montoInicial);
+            document.getElementById('resumenMontoFinal').textContent = formatearMoneda(montoFinal);
+
+            // Calcular totales
+            const totalDescontado = montoInicial - montoFinal;
+            const porcentajeTotal = montoInicial > 0 ? (totalDescontado / montoInicial * 100) : 0;
+
+            // Actualizar estadísticas
+            document.getElementById('totalDescontado').textContent = formatearMoneda(totalDescontado);
+            document.getElementById('porcentajeTotal').textContent = porcentajeTotal.toFixed(1) + '%';
+
+            // Actualizar lista de descuentos
+            const resumenDescuentosDiv = document.getElementById('resumenDescuentos');
+            resumenDescuentosDiv.innerHTML = '';
+
+            descuentos.forEach((descuento, index) => {
+                if (descuento.montoDescontado > 0 && descuento.activo) {
+                    const nombreDescuento = descuento.nombre.trim() || `Descuento #${index + 1}`;
+                    const itemHTML = `
+                        <div class="descuento-resumen-item">
+                            <span>${nombreDescuento}:</span>
+                            <span>- ${formatearMoneda(descuento.montoDescontado)}</span>
+                        </div>
+                    `;
+                    resumenDescuentosDiv.insertAdjacentHTML('beforeend', itemHTML);
+                }
+            });
+        }
+
+        /**
+         * Renderiza todos los descuentos desde el estado
+         */
+        function renderizarDescuentos() {
+            const container = document.getElementById('descuentosContainer');
+            container.innerHTML = '';
+
+            descuentos.forEach((desc, index) => {
+                const descuentoHTML = `
+                    <div class="descuento-item ${!desc.activo ? 'desactivado' : ''}" id="descuento-${desc.id}" data-id="${desc.id}">
+                        <div class="descuento-header">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span class="descuento-numero">#${index + 1}</span>
+                                <span class="tipo-badge ${desc.tipo}">${desc.tipo === 'porcentaje' ? '%' : '$'}</span>
+                            </div>
+                            <div class="descuento-controls">
+                                <div class="descuento-toggle">
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="activo-${desc.id}" ${desc.activo ? 'checked' : ''} onchange="toggleDescuento(${desc.id})">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <button class="btn-icon btn-delete" onclick="eliminarDescuento(${desc.id})" title="Eliminar descuento">×</button>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-full">
+                                <label for="nombre-${desc.id}">Nombre del descuento</label>
+                                <input type="text" 
+                                       id="nombre-${desc.id}" 
+                                       placeholder="Ej: Impuestos, Comisión, Ahorro" 
+                                       value="${desc.nombre}"
+                                       oninput="actualizarCampo(${desc.id}, 'nombre')">
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div>
+                                <label for="tipo-${desc.id}">Tipo de descuento</label>
+                                <select id="tipo-${desc.id}" onchange="cambiarTipoDescuento(${desc.id})">
+                                    <option value="porcentaje" ${desc.tipo === 'porcentaje' ? 'selected' : ''}>Porcentaje (%)</option>
+                                    <option value="monto" ${desc.tipo === 'monto' ? 'selected' : ''}>Monto Fijo ($)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="valor-${desc.id}">${desc.tipo === 'porcentaje' ? 'Porcentaje' : 'Monto fijo'}</label>
+                                <input type="number" 
+                                       id="valor-${desc.id}" 
+                                       placeholder="${desc.tipo === 'porcentaje' ? 'Ej: 15' : 'Ej: 5000'}" 
+                                       min="0" 
+                                       ${desc.tipo === 'porcentaje' ? 'max="100"' : ''}
+                                       step="0.01"
+                                       value="${desc.valor || ''}"
+                                       onfocus="if(this.value == '0') this.value = ''"
+                                       oninput="actualizarCampo(${desc.id}, 'valor')">
+                            </div>
+                        </div>
+
+                        <div class="monto-descontado">
+                            <div class="monto-descontado-label">Monto a restar:</div>
+                            <div class="monto-descontado-valor" id="monto-descontado-${desc.id}">${formatearMoneda(desc.montoDescontado)}</div>
+                        </div>
+
+                        <div class="monto-restante">
+                            💡 Monto luego de este descuento: <strong id="monto-restante-${desc.id}">$0.00</strong>
+                        </div>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', descuentoHTML);
+            });
+        }
+
+        /**
+         * Elimina un descuento
+         */
+        function eliminarDescuento(id) {
+            // Eliminar del estado (fuente única de verdad)
+            descuentos = descuentos.filter(d => d.id !== id);
+
+            // Re-renderizar todo
+            renderizarDescuentos();
+
+            // Si no quedan descuentos, ocultar el botón de agregar otro
+            if (descuentos.length === 0) {
+                document.getElementById('btnAgregarOtro').classList.add('hidden');
+            }
+
+            // Recalcular todo
+            calcularTodo();
+        }
+
+        /**
+         * Maneja cambios en el monto inicial
+         */
+        function onMontoInicialChange() {
+            calcularTodo();
+        }
+
+        /**
+         * Toggle activar/desactivar descuento
+         */
+        function toggleDescuento(id) {
+            const descuento = descuentos.find(d => d.id === id);
+            if (!descuento) return;
+
+            const checkbox = document.getElementById(`activo-${id}`);
+            
+            // Actualizar estado (fuente única de verdad)
+            descuento.activo = checkbox.checked;
+            
+            calcularTodo();
+        }
+
+        /**
+         * Limpia todo y resetea la calculadora
+         */
+        function limpiarTodo() {
+            if (descuentos.length > 0 || document.getElementById('montoInicial').value) {
+                if (!confirm('¿Estás seguro de que querés limpiar todo?')) {
+                    return;
+                }
+            }
+
+            document.getElementById('montoInicial').value = '';
+            document.getElementById('descuentosContainer').innerHTML = '';
+            document.getElementById('btnAgregarOtro').classList.add('hidden');
+            descuentos = [];
+            contadorDescuentos = 0;
+            calcularTodo();
+            localStorage.removeItem('calculadoraDescuentos');
+        }
+
+        /**
+         * Exporta el resumen como texto
+         */
+        function exportarResumen() {
+            const montoInicial = parseFloat(document.getElementById('montoInicial').value) || 0;
+            
+            if (montoInicial === 0 || descuentos.length === 0) {
+                alert('No hay datos para exportar');
+                return;
+            }
+
+            let texto = '📊 RESUMEN DE DESCUENTOS\n';
+            texto += '================================\n\n';
+            texto += `Monto Inicial: ${formatearMoneda(montoInicial)}\n\n`;
+            texto += 'Descuentos aplicados:\n';
+            texto += '--------------------------------\n';
+
+            const descuentosCalculados = calcularDescuentos(montoInicial, descuentos);
+            
+            let contador = 1;
+            descuentosCalculados.forEach((desc, i) => {
+                if (desc.activo && desc.montoDescontado > 0) {
+                    const nombreDescuento = desc.nombre.trim() || `Descuento #${i + 1}`;
+                    texto += `${contador}. ${nombreDescuento}\n`;
+                    texto += `   Tipo: ${desc.tipo === 'porcentaje' ? desc.valor + '%' : formatearMoneda(desc.valor)}\n`;
+                    texto += `   Resta: ${formatearMoneda(desc.montoDescontado)}\n`;
+                    texto += `   Quedan: ${formatearMoneda(desc.montoRestante)}\n\n`;
+                    contador++;
+                }
+            });
+
+            const totalDescontado = descuentos
+                .filter(d => d.activo)
+                .reduce((acc, d) => acc + d.montoDescontado, 0);
+            
+            const montoRestante = montoInicial - totalDescontado;
+            const porcentajeTotal = (totalDescontado / montoInicial * 100).toFixed(1);
+
+            texto += '================================\n';
+            texto += `Total descontado: ${formatearMoneda(totalDescontado)} (${porcentajeTotal}%)\n`;
+            texto += `Monto Final: ${formatearMoneda(montoRestante)}\n\n`;
+            texto += `Fecha: ${new Date().toLocaleDateString('es-AR')}\n`;
+
+            // Copiar al portapapeles
+            navigator.clipboard.writeText(texto).then(() => {
+                alert('✅ Resumen copiado al portapapeles');
+            }).catch(() => {
+                // Fallback: crear archivo de texto
+                const blob = new Blob([texto], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'resumen-descuentos.txt';
+                a.click();
+            });
+        }
+
+        /**
+         * Guarda como PDF
+         */
+        function guardarEnLocal() {
+            const montoInicial = parseFloat(document.getElementById('montoInicial').value) || 0;
+            
+            if (montoInicial === 0 || descuentos.length === 0) {
+                alert('No hay datos para exportar');
+                return;
+            }
+
+            // Crear iframe oculto para imprimir sin bloquear la página
+            const iframe = document.createElement('iframe');
+            iframe.style.position = 'absolute';
+            iframe.style.width = '0';
+            iframe.style.height = '0';
+            iframe.style.border = 'none';
+            document.body.appendChild(iframe);
+            
+            let htmlDescuentos = '';
+            
+            descuentos.forEach((desc, i) => {
+                if (desc.activo && desc.montoDescontado > 0) {
+                    const nombreDescuento = desc.nombre.trim() || `Descuento #${i + 1}`;
+                    htmlDescuentos += `
+                        <tr>
+                            <td style="padding: 12px; border-bottom: 1px solid #e2e8f0;">${nombreDescuento}</td>
+                            <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: center;">
+                                ${desc.tipo === 'porcentaje' ? desc.valor + '%' : formatearMoneda(desc.valor)}
+                            </td>
+                            <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: right; color: #dc2626;">
+                                - ${formatearMoneda(desc.montoDescontado)}
+                            </td>
+                        </tr>
+                    `;
+                }
+            });
+
+            // Cálculo simplificado y claro
+            const totalDescontado = descuentos
+                .filter(d => d.activo)
+                .reduce((acc, d) => acc + d.montoDescontado, 0);
+            
+            const montoFinal = montoInicial - totalDescontado;
+            const porcentajeTotal = ((totalDescontado / montoInicial) * 100).toFixed(1);
+            const fecha = new Date().toLocaleDateString('es-AR', { year: 'numeric', month: 'long', day: 'numeric' });
+
+            const htmlPDF = `
+                <!DOCTYPE html>
+                <html lang="es">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Resumen de Descuentos</title>
+                    <style>
+                        * {
+                            margin: 0;
+                            padding: 0;
+                            box-sizing: border-box;
+                        }
+                        body {
+                            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', sans-serif;
+                            padding: 40px;
+                            background: white;
+                            color: #1a1a1a;
+                        }
+                        .header {
+                            text-align: center;
+                            margin-bottom: 40px;
+                            padding-bottom: 20px;
+                            border-bottom: 3px solid #667eea;
+                        }
+                        .header h1 {
+                            font-size: 28px;
+                            color: #1a1a1a;
+                            margin-bottom: 8px;
+                        }
+                        .header p {
+                            color: #64748b;
+                            font-size: 14px;
+                        }
+                        .stats {
+                            display: flex;
+                            gap: 20px;
+                            margin-bottom: 30px;
+                        }
+                        .stat-box {
+                            flex: 1;
+                            padding: 20px;
+                            background: #f8fafc;
+                            border-radius: 12px;
+                            border-left: 4px solid #667eea;
+                        }
+                        .stat-label {
+                            font-size: 12px;
+                            color: #64748b;
+                            text-transform: uppercase;
+                            letter-spacing: 0.5px;
+                            margin-bottom: 8px;
+                            font-weight: 600;
+                        }
+                        .stat-value {
+                            font-size: 24px;
+                            font-weight: 700;
+                            color: #1a1a1a;
+                        }
+                        table {
+                            width: 100%;
+                            border-collapse: collapse;
+                            margin-bottom: 30px;
+                            background: white;
+                            border: 1px solid #e2e8f0;
+                            border-radius: 8px;
+                            overflow: hidden;
+                        }
+                        thead {
+                            background: #f8fafc;
+                        }
+                        th {
+                            padding: 12px;
+                            text-align: left;
+                            font-size: 12px;
+                            font-weight: 600;
+                            color: #475569;
+                            text-transform: uppercase;
+                            letter-spacing: 0.5px;
+                        }
+                        th:nth-child(2) {
+                            text-align: center;
+                        }
+                        th:nth-child(3) {
+                            text-align: right;
+                        }
+                        .totales {
+                            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                            color: white;
+                            padding: 24px;
+                            border-radius: 12px;
+                            margin-top: 20px;
+                        }
+                        .total-row {
+                            display: flex;
+                            justify-content: space-between;
+                            padding: 12px 0;
+                            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+                        }
+                        .total-row:last-child {
+                            border-bottom: none;
+                            border-top: 2px solid rgba(255, 255, 255, 0.3);
+                            padding-top: 16px;
+                            margin-top: 12px;
+                            font-size: 20px;
+                            font-weight: 700;
+                        }
+                        .footer {
+                            margin-top: 40px;
+                            padding-top: 20px;
+                            border-top: 1px solid #e2e8f0;
+                            text-align: center;
+                            color: #94a3b8;
+                            font-size: 12px;
+                        }
+                        @media print {
+                            body {
+                                padding: 20px;
+                            }
+                            .no-print {
+                                display: none;
+                            }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>💰 Resumen de Descuentos</h1>
+                        <p>${fecha}</p>
+                    </div>
+
+                    <div class="stats">
+                        <div class="stat-box">
+                            <div class="stat-label">Monto Inicial</div>
+                            <div class="stat-value">${formatearMoneda(montoInicial)}</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Total Descontado</div>
+                            <div class="stat-value" style="color: #dc2626;">${formatearMoneda(totalDescontado)}</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">% Descontado</div>
+                            <div class="stat-value" style="color: #667eea;">${porcentajeTotal}%</div>
+                        </div>
+                    </div>
+
+                    <h2 style="margin-bottom: 16px; font-size: 18px; color: #1a1a1a;">Detalle de Descuentos</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Concepto</th>
+                                <th>Tipo/Valor</th>
+                                <th>Monto</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${htmlDescuentos}
+                        </tbody>
+                    </table>
+
+                    <div class="totales">
+                        <div class="total-row">
+                            <span>Monto Inicial:</span>
+                            <span>${formatearMoneda(montoInicial)}</span>
+                        </div>
+                        <div class="total-row">
+                            <span>Total Descontado:</span>
+                            <span>- ${formatearMoneda(totalDescontado)}</span>
+                        </div>
+                        <div class="total-row">
+                            <span>Monto Final:</span>
+                            <span>${formatearMoneda(montoFinal)}</span>
+                        </div>
+                    </div>
+
+                    <div class="footer">
+                        <p>Generado con Calculadora de Descuentos</p>
+                    </div>
+
+                <\/body>
+                </html>
+            `;
+
+            // Escribir el HTML en el iframe
+            const iframeDoc = iframe.contentWindow.document;
+            iframeDoc.open();
+            iframeDoc.write(htmlPDF);
+            iframeDoc.close();
+
+            // Esperar a que el contenido se cargue y luego imprimir
+            iframe.onload = function() {
+                setTimeout(function() {
+                    iframe.contentWindow.focus();
+                    iframe.contentWindow.print();
+                    
+                    // Remover el iframe después de imprimir
+                    setTimeout(function() {
+                        document.body.removeChild(iframe);
+                    }, 1000);
+                }, 250);
+            };
+        }
+
+        /**
+         * Carga el estado desde localStorage
+         */
+        function cargarDesdeLocal() {
+            const guardado = localStorage.getItem('calculadoraDescuentos');
+            if (!guardado) return;
+
+            try {
+                const estado = JSON.parse(guardado);
+                document.getElementById('montoInicial').value = estado.montoInicial || '';
+                
+                // Cargar estado (fuente única de verdad)
+                if (estado.descuentos && estado.descuentos.length > 0) {
+                    descuentos = estado.descuentos;
+                    
+                    // Sincronizar contadorDescuentos con el ID más alto
+                    contadorDescuentos = Math.max(...descuentos.map(d => d.id), estado.contadorDescuentos || 0);
+                    
+                    // Renderizar desde el estado
+                    renderizarDescuentos();
+                    
+                    document.getElementById('btnAgregarOtro').classList.remove('hidden');
+                }
+                
+                calcularTodo();
+            } catch (e) {
+                console.error('Error al cargar datos guardados:', e);
+            }
+        }
+
+        // Listener para el monto inicial
+        document.getElementById('montoInicial').addEventListener('input', function() {
+            const valor = parseFloat(this.value) || 0;
+            if (valor < 0) {
+                this.value = 0;
+            }
+            calcularTodo();
+        });
+
+        // Cargar datos guardados al iniciar
+        cargarDesdeLocal();
+
+        // Calcular al cargar la página
+        calcularTodo();
+    </script>
+</body>
+</html>
