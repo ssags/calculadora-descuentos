@@ -1477,7 +1477,7 @@
             if (isMobile) {
                 // En móviles, usar html2pdf para generar PDF
                 const tempDiv = document.createElement('div');
-                // Colocar en viewport pero invisible para que html2canvas lo renderice correctamente
+                // Visible para html2canvas pero imperceptible para el usuario
                 tempDiv.style.cssText = `
                     position: fixed;
                     top: 0;
@@ -1485,10 +1485,13 @@
                     width: 210mm;
                     min-height: 297mm;
                     background: white;
-                    z-index: -1;
-                    opacity: 0;
+                    z-index: 9999;
                     padding: 20px;
                     font-family: Arial, sans-serif;
+                    pointer-events: none;
+                    visibility: visible;
+                    transform: scale(0.01);
+                    transform-origin: top left;
                 `;
                 
                 // Crear el contenido HTML directamente como string y asignarlo
