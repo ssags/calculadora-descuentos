@@ -1436,36 +1436,43 @@
             iframeDoc.write(htmlPDF);
             iframeDoc.close();
 
-            // Esperar a que el contenido se cargue y luego imprimir
+            // Esperar a que el contenido se cargue
             iframe.onload = function() {
                 setTimeout(function() {
                     try {
-                        // Para móviles, mostrar temporalmente el iframe
                         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
                         
                         if (isMobile) {
-                            iframe.style.position = 'fixed';
-                            iframe.style.top = '0';
-                            iframe.style.left = '0';
-                            iframe.style.width = '100%';
-                            iframe.style.height = '100%';
-                            iframe.style.visibility = 'visible';
-                            iframe.style.zIndex = '9999';
-                            iframe.style.background = 'white';
-                        }
-                        
-                        iframe.contentWindow.focus();
-                        iframe.contentWindow.print();
-                        
-                        // Remover el iframe después de imprimir
-                        setTimeout(function() {
+                            // En móviles, descargar como HTML
+                            const blob = new Blob([htmlPDF], { type: 'text/html' });
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = 'resumen-descuentos.html';
+                            a.click();
+                            URL.revokeObjectURL(url);
+                            
+                            // Remover iframe
                             if (document.body.contains(iframe)) {
                                 document.body.removeChild(iframe);
                             }
-                        }, 1000);
+                        } else {
+                            // En desktop, imprimir
+                            iframe.contentWindow.focus();
+                            iframe.contentWindow.print();
+                            
+                            // Remover el iframe después de imprimir
+                            setTimeout(function() {
+                                if (document.body.contains(iframe)) {
+                                    document.body.removeChild(iframe);
+                                }
+                            }, 1000);
+                        }
                     } catch (e) {
-                        console.error('Error al imprimir:', e);
-                        document.body.removeChild(iframe);
+                        console.error('Error al generar PDF:', e);
+                        if (document.body.contains(iframe)) {
+                            document.body.removeChild(iframe);
+                        }
                     }
                 }, 250);
             };
