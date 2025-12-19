@@ -1477,7 +1477,19 @@
             if (isMobile) {
                 // En móviles, usar html2pdf para generar PDF
                 const tempDiv = document.createElement('div');
-                tempDiv.style.cssText = 'position: fixed; left: -9999px; top: 0; width: 210mm; padding: 20px; background: white; font-family: Arial, sans-serif;';
+                // Colocar en viewport pero invisible para que html2canvas lo renderice correctamente
+                tempDiv.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 210mm;
+                    min-height: 297mm;
+                    background: white;
+                    z-index: -1;
+                    opacity: 0;
+                    padding: 20px;
+                    font-family: Arial, sans-serif;
+                `;
                 
                 // Crear el contenido HTML directamente como string y asignarlo
                 tempDiv.innerHTML = `
@@ -1557,25 +1569,27 @@
                     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
                 };
                 
-                // Doble requestAnimationFrame + esperar fuentes para asegurar renderizado completo
-                requestAnimationFrame(() => {
-                    requestAnimationFrame(async () => {
-                        // Esperar a que todas las fuentes estén cargadas
-                        await document.fonts.ready;
-                        
-                        html2pdf().set(opt).from(tempDiv).save().then(() => {
+                // Delay crítico para que el contenido se renderice completamente en mobile
+                setTimeout(async () => {
+                    await document.fonts.ready;
+                    
+                    html2pdf()
+                        .set(opt)
+                        .from(tempDiv)
+                        .save()
+                        .then(() => {
                             if (document.body.contains(tempDiv)) {
                                 document.body.removeChild(tempDiv);
                             }
-                        }).catch((err) => {
+                        })
+                        .catch((err) => {
                             console.error('Error al generar PDF:', err);
                             if (document.body.contains(tempDiv)) {
                                 document.body.removeChild(tempDiv);
                             }
                             mostrarToast('Error al generar el PDF. Intente nuevamente.', 'error');
                         });
-                    });
-                });
+                }, 300);
             } else {
                 // En desktop, usar iframe para imprimir
                 const iframe = document.createElement('iframe');
