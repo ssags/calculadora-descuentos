@@ -688,6 +688,44 @@
         .resumen {
             animation: fadeIn 0.4s ease-out;
         }
+
+        /* Toast notifications */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            color: white;
+            padding: 16px 24px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+            font-size: 14px;
+            font-weight: 500;
+            z-index: 10000;
+            animation: slideUp 0.3s ease-out;
+            max-width: 90%;
+            text-align: center;
+        }
+
+        .toast.success {
+            background: #10b981;
+        }
+
+        .toast.error {
+            background: #dc2626;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
     </style>
 </head>
 <body>
@@ -761,11 +799,28 @@
     </div>
 
     <script>
-        // Variable global para contar descuentos
-        let contadorDescuentos = 0;
-
         // Array para almacenar los descuentos
         let descuentos = [];
+
+        /**
+         * Muestra un toast notification
+         */
+        function mostrarToast(mensaje, tipo = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${tipo}`;
+            toast.textContent = mensaje;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(-50%) translateY(20px)';
+                setTimeout(() => {
+                    if (document.body.contains(toast)) {
+                        document.body.removeChild(toast);
+                    }
+                }, 300);
+            }, 3000);
+        }
 
         /**
          * Formatea un número como moneda en pesos
@@ -785,15 +840,13 @@
             const montoInicial = parseFloat(document.getElementById('montoInicial').value) || 0;
             
             if (montoInicial <= 0) {
-                alert('Por favor, ingrese un monto inicial válido');
+                mostrarToast('Por favor, ingrese un monto inicial válido', 'error');
                 return;
             }
 
-            contadorDescuentos++;
-
-            // Agregar al estado (fuente única de verdad)
+            // Agregar al estado (fuente única de verdad) - usar timestamp como ID único
             descuentos.push({
-                id: contadorDescuentos,
+                id: Date.now(),
                 nombre: '',
                 tipo: 'porcentaje',
                 valor: 0,
@@ -904,8 +957,7 @@
             
             const estado = {
                 montoInicial,
-                descuentos,
-                contadorDescuentos
+                descuentos
             };
             
             localStorage.setItem('calculadoraDescuentos', JSON.stringify(estado));
@@ -1137,7 +1189,6 @@
             document.getElementById('descuentosContainer').innerHTML = '';
             document.getElementById('btnAgregarOtro').classList.add('hidden');
             descuentos = [];
-            contadorDescuentos = 0;
             calcularTodo();
             localStorage.removeItem('calculadoraDescuentos');
         }
@@ -1149,7 +1200,7 @@
             const montoInicial = parseFloat(document.getElementById('montoInicial').value) || 0;
             
             if (montoInicial === 0 || descuentos.length === 0) {
-                alert('No hay datos para exportar');
+                mostrarToast('No hay datos para exportar', 'error');
                 return;
             }
 
@@ -1187,7 +1238,7 @@
 
             // Copiar al portapapeles
             navigator.clipboard.writeText(texto).then(() => {
-                alert('✅ Resumen copiado al portapapeles');
+                mostrarToast('✅ Resumen copiado al portapapeles', 'success');
             }).catch(() => {
                 // Fallback: crear archivo de texto
                 const blob = new Blob([texto], { type: 'text/plain' });
@@ -1206,7 +1257,7 @@
             const montoInicial = parseFloat(document.getElementById('montoInicial').value) || 0;
             
             if (montoInicial === 0 || descuentos.length === 0) {
-                alert('No hay datos para exportar');
+                mostrarToast('No hay datos para exportar', 'error');
                 return;
             }
 
@@ -1426,25 +1477,75 @@
             if (isMobile) {
                 // En móviles, usar html2pdf para generar PDF
                 const tempDiv = document.createElement('div');
-                tempDiv.style.cssText = 'position: fixed; left: -9999px; top: 0; width: 800px; background: white;';
+                tempDiv.style.cssText = 'position: fixed; left: -9999px; top: 0; width: 210mm; padding: 20px; background: white; font-family: Arial, sans-serif;';
                 
-                // Parsear el HTML y extraer los estilos del head
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(htmlPDF, 'text/html');
-                
-                // Crear un style element con los estilos del documento parseado
-                const styleEl = doc.querySelector('style');
-                if (styleEl) {
-                    const newStyle = document.createElement('style');
-                    newStyle.textContent = styleEl.textContent;
-                    tempDiv.appendChild(newStyle);
-                }
-                
-                // Copiar el contenido del body
-                const body = doc.body;
-                while (body.firstChild) {
-                    tempDiv.appendChild(body.firstChild);
-                }
+                // Crear el contenido HTML directamente como string y asignarlo
+                tempDiv.innerHTML = `
+                    <style>
+                        * { margin: 0; padding: 0; box-sizing: border-box; }
+                        .pdf-header { text-align: center; margin-bottom: 30px; padding-bottom: 15px; border-bottom: 3px solid #667eea; }
+                        .pdf-header h1 { font-size: 24px; color: #1a1a1a; margin-bottom: 8px; }
+                        .pdf-header p { color: #64748b; font-size: 12px; }
+                        .pdf-stats { display: block; margin-bottom: 25px; }
+                        .pdf-stat-box { display: block; margin-bottom: 12px; padding: 15px; background: #f8fafc; border-radius: 8px; border-left: 4px solid #667eea; }
+                        .pdf-stat-label { font-size: 10px; color: #64748b; text-transform: uppercase; margin-bottom: 6px; font-weight: 600; }
+                        .pdf-stat-value { font-size: 18px; font-weight: 700; color: #1a1a1a; }
+                        .pdf-table { width: 100%; border-collapse: collapse; margin-bottom: 25px; border: 1px solid #e2e8f0; }
+                        .pdf-table thead { background: #f8fafc; }
+                        .pdf-table th { padding: 10px; text-align: left; font-size: 11px; font-weight: 600; color: #475569; }
+                        .pdf-table td { padding: 10px; border-bottom: 1px solid #e2e8f0; font-size: 12px; }
+                        .pdf-totales { background: #667eea; color: white; padding: 20px; border-radius: 10px; margin-top: 15px; }
+                        .pdf-total-row { display: block; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.2); }
+                        .pdf-total-row span:first-child { display: inline-block; width: 60%; }
+                        .pdf-total-row span:last-child { display: inline-block; width: 40%; text-align: right; }
+                        .pdf-total-row:last-child { border-bottom: none; border-top: 2px solid rgba(255,255,255,0.3); padding-top: 12px; margin-top: 10px; font-size: 16px; font-weight: 700; }
+                    </style>
+                    <div class="pdf-header">
+                        <h1>Resumen de Descuentos</h1>
+                        <p>${fecha}</p>
+                    </div>
+                    <div class="pdf-stats">
+                        <div class="pdf-stat-box">
+                            <div class="pdf-stat-label">Monto Inicial</div>
+                            <div class="pdf-stat-value">${formatearMoneda(montoInicial)}</div>
+                        </div>
+                        <div class="pdf-stat-box">
+                            <div class="pdf-stat-label">Total Descontado</div>
+                            <div class="pdf-stat-value" style="color: #dc2626;">${formatearMoneda(totalDescontado)}</div>
+                        </div>
+                        <div class="pdf-stat-box">
+                            <div class="pdf-stat-label">% Descontado</div>
+                            <div class="pdf-stat-value" style="color: #667eea;">${porcentajeTotal}%</div>
+                        </div>
+                    </div>
+                    <h2 style="margin-bottom: 12px; font-size: 16px; color: #1a1a1a;">Detalle de Descuentos</h2>
+                    <table class="pdf-table">
+                        <thead>
+                            <tr>
+                                <th>Concepto</th>
+                                <th style="text-align: center;">Tipo/Valor</th>
+                                <th style="text-align: right;">Monto</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${htmlDescuentos}
+                        </tbody>
+                    </table>
+                    <div class="pdf-totales">
+                        <div class="pdf-total-row">
+                            <span>Monto Inicial:</span>
+                            <span>${formatearMoneda(montoInicial)}</span>
+                        </div>
+                        <div class="pdf-total-row">
+                            <span>Total Descontado:</span>
+                            <span>- ${formatearMoneda(totalDescontado)}</span>
+                        </div>
+                        <div class="pdf-total-row">
+                            <span>Monto Final:</span>
+                            <span>${formatearMoneda(montoFinal)}</span>
+                        </div>
+                    </div>
+                `;
                 
                 document.body.appendChild(tempDiv);
                 
@@ -1456,14 +1557,24 @@
                     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
                 };
                 
-                html2pdf().set(opt).from(tempDiv).save().then(() => {
-                    document.body.removeChild(tempDiv);
-                }).catch((err) => {
-                    console.error('Error al generar PDF:', err);
-                    if (document.body.contains(tempDiv)) {
-                        document.body.removeChild(tempDiv);
-                    }
-                    alert('Error al generar el PDF. Intente nuevamente.');
+                // Doble requestAnimationFrame + esperar fuentes para asegurar renderizado completo
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(async () => {
+                        // Esperar a que todas las fuentes estén cargadas
+                        await document.fonts.ready;
+                        
+                        html2pdf().set(opt).from(tempDiv).save().then(() => {
+                            if (document.body.contains(tempDiv)) {
+                                document.body.removeChild(tempDiv);
+                            }
+                        }).catch((err) => {
+                            console.error('Error al generar PDF:', err);
+                            if (document.body.contains(tempDiv)) {
+                                document.body.removeChild(tempDiv);
+                            }
+                            mostrarToast('Error al generar el PDF. Intente nuevamente.', 'error');
+                        });
+                    });
                 });
             } else {
                 // En desktop, usar iframe para imprimir
@@ -1521,9 +1632,6 @@
                 // Cargar estado (fuente única de verdad)
                 if (estado.descuentos && estado.descuentos.length > 0) {
                     descuentos = estado.descuentos;
-                    
-                    // Sincronizar contadorDescuentos con el ID más alto
-                    contadorDescuentos = Math.max(...descuentos.map(d => d.id), estado.contadorDescuentos || 0);
                     
                     // Renderizar desde el estado
                     renderizarDescuentos();
