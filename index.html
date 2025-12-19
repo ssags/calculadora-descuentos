@@ -333,6 +333,23 @@
             display: none;
         }
 
+        /* Mensaje de advertencia */
+        .warning-message {
+            background: #fef3c7;
+            color: #92400e;
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            margin-top: 8px;
+            display: none;
+            border-left: 3px solid #f59e0b;
+            line-height: 1.4;
+        }
+
+        .warning-message.show {
+            display: block;
+        }
+
         /* Ocultar elemento */
         .hidden {
             display: none;
@@ -912,6 +929,40 @@
             }
 
             calcularTodo();
+            validarMontoFijo(id);
+        }
+
+        /**
+         * Valida si el monto fijo excede el saldo disponible
+         */
+        function validarMontoFijo(id) {
+            const descuento = descuentos.find(d => d.id === id);
+            if (!descuento || descuento.tipo !== 'monto') return;
+
+            const warningDiv = document.getElementById(`warning-${id}`);
+            if (!warningDiv) return;
+
+            // Calcular el monto disponible hasta este descuento
+            const montoInicial = parseFloat(document.getElementById('montoInicial').value) || 0;
+            const indexDescuento = descuentos.findIndex(d => d.id === id);
+            
+            let montoDisponible = montoInicial;
+            for (let i = 0; i < indexDescuento; i++) {
+                if (descuentos[i].activo) {
+                    if (descuentos[i].tipo === 'porcentaje') {
+                        montoDisponible -= montoDisponible * (descuentos[i].valor / 100);
+                    } else {
+                        montoDisponible -= Math.min(descuentos[i].valor, montoDisponible);
+                    }
+                }
+            }
+
+            // Verificar si el monto fijo excede el disponible
+            if (descuento.valor > montoDisponible && descuento.valor > 0) {
+                warningDiv.classList.add('show');
+            } else {
+                warningDiv.classList.remove('show');
+            }
         }
 
         /**
@@ -1025,6 +1076,13 @@
                 resumen.classList.add('hidden');
             }
 
+            // Validar advertencias de montos fijos
+            descuentos.forEach(desc => {
+                if (desc.tipo === 'monto') {
+                    validarMontoFijo(desc.id);
+                }
+            });
+
             // Guardar estado automáticamente
             guardarEstado();
         }
@@ -1118,6 +1176,9 @@
                                        value="${desc.valor || ''}"
                                        onfocus="if(this.value == '0') this.value = ''"
                                        oninput="actualizarCampo(${desc.id}, 'valor')">
+                                <div class="warning-message" id="warning-${desc.id}">
+                                    ⚠️ El monto ingresado supera el saldo disponible. Solo se descontará hasta agotar el saldo.
+                                </div>
                             </div>
                         </div>
 
