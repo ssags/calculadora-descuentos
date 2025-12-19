@@ -6,6 +6,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <title>Calculadora de Descuentos</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         /* Estilos generales */
         * {
@@ -1423,16 +1424,24 @@
             `;
 
             if (isMobile) {
-                // En móviles, descargar directamente como HTML
-                const blob = new Blob([htmlPDF], { type: 'text/html' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'resumen-descuentos.html';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
+                // En móviles, usar html2pdf para generar PDF
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = htmlPDF;
+                tempDiv.style.position = 'fixed';
+                tempDiv.style.left = '-9999px';
+                document.body.appendChild(tempDiv);
+                
+                const opt = {
+                    margin: 10,
+                    filename: 'resumen-descuentos.pdf',
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { scale: 2 },
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                };
+                
+                html2pdf().set(opt).from(tempDiv).save().then(() => {
+                    document.body.removeChild(tempDiv);
+                });
             } else {
                 // En desktop, usar iframe para imprimir
                 const iframe = document.createElement('iframe');
