@@ -1477,21 +1477,16 @@
             if (isMobile) {
                 // En móviles, usar html2pdf para generar PDF
                 const tempDiv = document.createElement('div');
-                // Visible para html2canvas pero imperceptible para el usuario
+                // Fuera del viewport sin transform (compatible con html2canvas mobile)
                 tempDiv.style.cssText = `
-                    position: fixed;
+                    position: absolute;
                     top: 0;
-                    left: 0;
-                    width: 210mm;
-                    min-height: 297mm;
+                    left: -9999px;
+                    width: 794px;
+                    min-height: 1123px;
                     background: white;
-                    z-index: 9999;
-                    padding: 20px;
+                    padding: 32px;
                     font-family: Arial, sans-serif;
-                    pointer-events: none;
-                    visibility: visible;
-                    transform: scale(0.01);
-                    transform-origin: top left;
                 `;
                 
                 // Crear el contenido HTML directamente como string y asignarlo
@@ -1568,11 +1563,17 @@
                     margin: 10,
                     filename: 'resumen-descuentos.pdf',
                     image: { type: 'jpeg', quality: 0.98 },
-                    html2canvas: { scale: 2 },
+                    html2canvas: {
+                        scale: 2,
+                        backgroundColor: '#ffffff',
+                        useCORS: true,
+                        windowWidth: tempDiv.scrollWidth,
+                        windowHeight: tempDiv.scrollHeight
+                    },
                     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
                 };
                 
-                // Delay crítico para que el contenido se renderice completamente en mobile
+                // Delay realista para mobile + DOM dinámico
                 setTimeout(async () => {
                     await document.fonts.ready;
                     
@@ -1592,7 +1593,7 @@
                             }
                             mostrarToast('Error al generar el PDF. Intente nuevamente.', 'error');
                         });
-                }, 300);
+                }, 700);
             } else {
                 // En desktop, usar iframe para imprimir
                 const iframe = document.createElement('iframe');
