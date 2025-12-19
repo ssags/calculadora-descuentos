@@ -6,7 +6,8 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <title>Calculadora de Descuentos</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         /* Estilos generales */
         * {
@@ -1251,9 +1252,35 @@
         }
 
         /**
-         * Guarda como PDF
+         * Captura el resumen como imagen usando html2canvas
          */
-        function guardarEnLocal() {
+        async function capturarResumenComoImagen() {
+            const resumen = document.getElementById('resumenFinal');
+            if (!resumen) return null;
+
+            try {
+                // Configuración optimizada para móviles
+                const canvas = await html2canvas(resumen, {
+                    scale: 2,
+                    backgroundColor: '#1e293b',
+                    logging: false,
+                    useCORS: true,
+                    allowTaint: true,
+                    windowWidth: resumen.scrollWidth,
+                    windowHeight: resumen.scrollHeight
+                });
+                
+                return canvas;
+            } catch (error) {
+                console.error('Error al capturar imagen:', error);
+                return null;
+            }
+        }
+
+        /**
+         * Guarda como PDF o imagen
+         */
+        async function guardarEnLocal() {
             const montoInicial = parseFloat(document.getElementById('montoInicial').value) || 0;
             
             if (montoInicial === 0 || descuentos.length === 0) {
@@ -1475,112 +1502,123 @@
             `;
 
             if (isMobile) {
-                // En móviles, usar html2pdf para generar PDF
+                // En móviles, capturar el resumen visible y crear PDF desde esa imagen
                 mostrarToast('Generando PDF...', 'info');
                 
-                const tempDiv = document.createElement('div');
-                tempDiv.style.cssText = `
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    width: 210mm;
-                    background: white;
-                    padding: 20px;
-                    font-family: Arial, sans-serif;
-                    z-index: -1;
-                    opacity: 0;
-                    pointer-events: none;
-                `;
-                
-                // Crear el contenido HTML con estilos más simples
-                tempDiv.innerHTML = `
-                    <div style="padding: 20px;">
-                        <div style="text-align: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 3px solid #667eea;">
-                            <h1 style="font-size: 24px; color: #1a1a1a; margin-bottom: 8px;">Resumen de Descuentos</h1>
-                            <p style="color: #64748b; font-size: 12px;">${fecha}</p>
+                try {
+                    // Crear contenedor para PDF con toda la info
+                    const pdfContainer = document.createElement('div');
+                    pdfContainer.style.cssText = `
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: auto;
+                        background: white;
+                        padding: 24px;
+                        z-index: 99999;
+                        overflow-y: auto;
+                        font-family: Arial, sans-serif;
+                    `;
+                    
+                    pdfContainer.innerHTML = `
+                        <div style="max-width: 600px; margin: 0 auto;">
+                            <div style="text-align: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 3px solid #667eea;">
+                                <h1 style="font-size: 26px; color: #1a1a1a; margin-bottom: 8px; font-weight: 700;">💰 Resumen de Descuentos</h1>
+                                <p style="color: #64748b; font-size: 13px;">${fecha}</p>
+                            </div>
+                            
+                            <div style="margin-bottom: 24px;">
+                                <div style="margin-bottom: 14px; padding: 16px; background: #f0f9ff; border-radius: 10px; border-left: 4px solid #0ea5e9;">
+                                    <div style="font-size: 11px; color: #0369a1; text-transform: uppercase; margin-bottom: 6px; font-weight: 700; letter-spacing: 0.5px;">Monto Inicial</div>
+                                    <div style="font-size: 22px; font-weight: 700; color: #1a1a1a;">${formatearMoneda(montoInicial)}</div>
+                                </div>
+                                <div style="margin-bottom: 14px; padding: 16px; background: #fef2f2; border-radius: 10px; border-left: 4px solid #ef4444;">
+                                    <div style="font-size: 11px; color: #991b1b; text-transform: uppercase; margin-bottom: 6px; font-weight: 700; letter-spacing: 0.5px;">Total Descontado</div>
+                                    <div style="font-size: 22px; font-weight: 700; color: #dc2626;">- ${formatearMoneda(totalDescontado)}</div>
+                                </div>
+                                <div style="margin-bottom: 14px; padding: 16px; background: #f5f3ff; border-radius: 10px; border-left: 4px solid #8b5cf6;">
+                                    <div style="font-size: 11px; color: #5b21b6; text-transform: uppercase; margin-bottom: 6px; font-weight: 700; letter-spacing: 0.5px;">Porcentaje Descontado</div>
+                                    <div style="font-size: 22px; font-weight: 700; color: #7c3aed;">${porcentajeTotal}%</div>
+                                </div>
+                            </div>
+                            
+                            <h2 style="margin-bottom: 14px; font-size: 18px; color: #1a1a1a; font-weight: 700;">📋 Detalle de Descuentos</h2>
+                            <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px; border: 2px solid #e2e8f0; border-radius: 10px; overflow: hidden;">
+                                <thead style="background: #f8fafc;">
+                                    <tr>
+                                        <th style="padding: 12px; text-align: left; font-size: 12px; font-weight: 700; color: #475569; border-bottom: 2px solid #e2e8f0;">Concepto</th>
+                                        <th style="padding: 12px; text-align: center; font-size: 12px; font-weight: 700; color: #475569; border-bottom: 2px solid #e2e8f0;">Tipo</th>
+                                        <th style="padding: 12px; text-align: right; font-size: 12px; font-weight: 700; color: #475569; border-bottom: 2px solid #e2e8f0;">Monto</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${htmlDescuentos}
+                                </tbody>
+                            </table>
+                            
+                            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 24px; border-radius: 12px; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);">
+                                <div style="padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.3); font-size: 15px;">
+                                    <span style="display: inline-block; width: 55%;">Monto Inicial:</span>
+                                    <span style="display: inline-block; width: 45%; text-align: right; font-weight: 600;">${formatearMoneda(montoInicial)}</span>
+                                </div>
+                                <div style="padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.3); font-size: 15px;">
+                                    <span style="display: inline-block; width: 55%;">Total Descontado:</span>
+                                    <span style="display: inline-block; width: 45%; text-align: right; font-weight: 600;">- ${formatearMoneda(totalDescontado)}</span>
+                                </div>
+                                <div style="padding-top: 16px; margin-top: 12px; font-size: 19px; font-weight: 700; border-top: 2px solid rgba(255,255,255,0.4);">
+                                    <span style="display: inline-block; width: 55%;">💵 Monto Final:</span>
+                                    <span style="display: inline-block; width: 45%; text-align: right;">${formatearMoneda(montoFinal)}</span>
+                                </div>
+                            </div>
+                            
+                            <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #e2e8f0; text-align: center; color: #94a3b8; font-size: 11px;">
+                                Generado con Calculadora de Descuentos
+                            </div>
                         </div>
-                        
-                        <div style="margin-bottom: 20px;">
-                            <div style="margin-bottom: 12px; padding: 15px; background: #f8fafc; border-radius: 8px; border-left: 4px solid #667eea;">
-                                <div style="font-size: 10px; color: #64748b; text-transform: uppercase; margin-bottom: 6px; font-weight: 600;">Monto Inicial</div>
-                                <div style="font-size: 18px; font-weight: 700; color: #1a1a1a;">${formatearMoneda(montoInicial)}</div>
-                            </div>
-                            <div style="margin-bottom: 12px; padding: 15px; background: #f8fafc; border-radius: 8px; border-left: 4px solid #667eea;">
-                                <div style="font-size: 10px; color: #64748b; text-transform: uppercase; margin-bottom: 6px; font-weight: 600;">Total Descontado</div>
-                                <div style="font-size: 18px; font-weight: 700; color: #dc2626;">${formatearMoneda(totalDescontado)}</div>
-                            </div>
-                            <div style="margin-bottom: 12px; padding: 15px; background: #f8fafc; border-radius: 8px; border-left: 4px solid #667eea;">
-                                <div style="font-size: 10px; color: #64748b; text-transform: uppercase; margin-bottom: 6px; font-weight: 600;">% Descontado</div>
-                                <div style="font-size: 18px; font-weight: 700; color: #667eea;">${porcentajeTotal}%</div>
-                            </div>
-                        </div>
-                        
-                        <h2 style="margin-bottom: 12px; font-size: 16px; color: #1a1a1a;">Detalle de Descuentos</h2>
-                        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; border: 1px solid #e2e8f0;">
-                            <thead style="background: #f8fafc;">
-                                <tr>
-                                    <th style="padding: 10px; text-align: left; font-size: 11px; font-weight: 600; color: #475569;">Concepto</th>
-                                    <th style="padding: 10px; text-align: center; font-size: 11px; font-weight: 600; color: #475569;">Tipo/Valor</th>
-                                    <th style="padding: 10px; text-align: right; font-size: 11px; font-weight: 600; color: #475569;">Monto</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${htmlDescuentos}
-                            </tbody>
-                        </table>
-                        
-                        <div style="background: #667eea; color: white; padding: 20px; border-radius: 10px; margin-top: 15px;">
-                            <div style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.2);">
-                                <span style="display: inline-block; width: 50%;">Monto Inicial:</span>
-                                <span style="display: inline-block; width: 50%; text-align: right;">${formatearMoneda(montoInicial)}</span>
-                            </div>
-                            <div style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.2);">
-                                <span style="display: inline-block; width: 50%;">Total Descontado:</span>
-                                <span style="display: inline-block; width: 50%; text-align: right;">- ${formatearMoneda(totalDescontado)}</span>
-                            </div>
-                            <div style="border-top: 2px solid rgba(255,255,255,0.3); padding-top: 12px; margin-top: 10px; font-size: 16px; font-weight: 700;">
-                                <span style="display: inline-block; width: 50%;">Monto Final:</span>
-                                <span style="display: inline-block; width: 50%; text-align: right;">${formatearMoneda(montoFinal)}</span>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                
-                document.body.appendChild(tempDiv);
-                
-                const opt = {
-                    margin: [10, 10, 10, 10],
-                    filename: 'resumen-descuentos.pdf',
-                    image: { type: 'jpeg', quality: 0.95 },
-                    html2canvas: {
-                        scale: 2,
-                        useCORS: true,
-                        logging: false,
-                        backgroundColor: '#ffffff'
-                    },
-                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-                };
-                
-                // Esperar a que se renderice completamente
-                setTimeout(() => {
-                    html2pdf()
-                        .set(opt)
-                        .from(tempDiv)
-                        .save()
-                        .then(() => {
-                            if (document.body.contains(tempDiv)) {
-                                document.body.removeChild(tempDiv);
-                            }
-                            mostrarToast('✅ PDF descargado correctamente', 'success');
-                        })
-                        .catch((err) => {
-                            console.error('Error al generar PDF:', err);
-                            if (document.body.contains(tempDiv)) {
-                                document.body.removeChild(tempDiv);
-                            }
-                            mostrarToast('Error al generar el PDF. Intente nuevamente.', 'error');
+                    `;
+                    
+                    document.body.appendChild(pdfContainer);
+                    
+                    // Scroll al inicio para asegurar que todo esté visible
+                    pdfContainer.scrollTop = 0;
+                    
+                    // Esperar render y capturar
+                    setTimeout(async () => {
+                        const canvas = await html2canvas(pdfContainer, {
+                            scale: 2,
+                            useCORS: true,
+                            allowTaint: true,
+                            backgroundColor: '#ffffff',
+                            logging: false,
+                            windowWidth: pdfContainer.scrollWidth,
+                            windowHeight: pdfContainer.scrollHeight
                         });
-                }, 500);
+                        
+                        // Remover contenedor temporal
+                        document.body.removeChild(pdfContainer);
+                        
+                        // Crear PDF desde el canvas
+                        const imgData = canvas.toDataURL('image/jpeg', 0.95);
+                        const pdf = new jspdf.jsPDF({
+                            orientation: 'portrait',
+                            unit: 'mm',
+                            format: 'a4'
+                        });
+                        
+                        const imgWidth = 210; // A4 width in mm
+                        const pageHeight = 297; // A4 height in mm
+                        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                        
+                        pdf.addImage(imgData, 'JPEG', 0, 0, imgWidth, imgHeight);
+                        pdf.save('resumen-descuentos.pdf');
+                        
+                        mostrarToast('✅ PDF descargado correctamente', 'success');
+                    }, 800);
+                } catch (error) {
+                    console.error('Error al generar PDF:', error);
+                    mostrarToast('Error al generar el PDF. Intente nuevamente.', 'error');
+                }
             } else {
                 // En desktop, usar iframe para imprimir
                 const iframe = document.createElement('iframe');
